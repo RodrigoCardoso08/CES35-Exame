@@ -13,7 +13,12 @@ class FollowerDrone:
         self.position = [10+2*(self.id-1), 10, 0]
         self.client.bind((f'10.0.0.{id}', 9999))
         self.step = 5
+        self.last_communication_time = None
+        self.communication_timeout = 10
     
+    def update_last_communication_time(self):
+        self.last_communication_time = time.time()
+
     def update_position(self, new_position):
         with open(f'drone{self.id}_position.txt', 'w') as f:
             f.write(new_position)
@@ -60,6 +65,7 @@ class FollowerDrone:
             try:
                 data, addr = self.client.recvfrom(4096)
                 message = data.decode('utf-8')
+                self.update_last_communication_time()
                 self.print_output(f"Recebi a mensagem {message}")
                 if message == "REQ:POS":
                     self.send_position()
@@ -81,14 +87,32 @@ class FollowerDrone:
                         self.client.sendto("VOTE:TRUE".encode('utf-8'), (self.master_ip, self.port))
                     else:
                         self.client.sendto("VOTE:FALSE".encode('utf-8'), (self.master_ip, self.port))
+                elif message.startswith("REQ:PANIC"):
+                    self.client.sendto("RETURNING".encode('utf-8'), (self.master_ip, self.port))
+                    self.print_output("Vou abrir returning_thread")
+                    returning_thread = threading.Thread(target=self.move, args=([10.0,10.0,0.0],))
+                    self.print_output("Abri returning_thread")
+                    returning_thread.daemon = False
+                    self.print_output("Vou setar daemon false na returning_thread")
+                    returning_thread.start()
+                    self.print_output("Vou startar a returning_thread")
             except Exception as e:
                 self.print_output(f"Tomei {e}")
                 
-
+    def check_communication(self):
+        # Método para verificar regularmente a comunicação
+        while True:
+            time.sleep(5)  # Verificar a cada 5 segundos
+            if self.last_communication_time and (time.time() - self.last_communication_time > self.communication_timeout):
+                self.print_output("Comunicação com o mestre perdida. Retornando ao ponto inicial.")
+                self.move([10.0,10.0,0.0])
+                break
 
     def run(self):
         listen_thread = threading.Thread(target=self.listen_for_requests)
         listen_thread.start()
+        communication_check_thread = threading.Thread(target=self.check_communication)
+        communication_check_thread.start()
 
 if __name__ == '__main__':
     follower = FollowerDrone(sys.argv[1])
