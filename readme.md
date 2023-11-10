@@ -1,2 +1,3 @@
+password for sudo: wifi
 sudo mn -c
 sudo python3 simulation.py

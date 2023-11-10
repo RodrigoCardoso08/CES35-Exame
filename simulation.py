@@ -89,7 +89,9 @@ class Simulation:
         # Plotting
         plt.clf()
         plt.scatter(x_positions, y_positions)
-
+        plt.xlim(0, 100)  # Define o limite do eixo X de 0 a 100
+        plt.ylim(0, 100)
+        
         # Adding annotations
         for i, (x, y) in enumerate(zip(x_positions, y_positions)):
             print(f'Drone {i+1} esta na posicao ({x}, {y})')
