@@ -87,9 +87,9 @@ class MasterDrone:
 
     def enter_panic_mode(self):
         self.panic_mode = True
-        # for addr in list(self.followers.keys()):
-        #     self.print_output(f"SENT PANIC MESSAGE TO {addr}")
-        #     self.server.sendto("REQ:PANIC".encode('utf-8'), (addr, self.port))
+        for addr in list(self.followers.keys()):
+            self.print_output(f"SENT PANIC MESSAGE TO {addr}")
+            self.server.sendto("REQ:PANIC".encode('utf-8'), (addr, self.port))
         self.print_output("ENTERING PANIC MODE!!")
         # self.move([10, 10, 0])
         # Movimenta apenas o drone master para a posição [10, 10, 0]

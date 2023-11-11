@@ -6,5 +6,5 @@ Recebi a mensagem REQ:POS
 Recebi a mensagem REQ:POS
 Recebi a mensagem REQ:POS
 Recebi a mensagem REQ:POS
-Recebi a mensagem REQ:POS
+Recebi a mensagem REQ:PANIC
 Comunicação com o mestre perdida. Retornando ao ponto inicial.
