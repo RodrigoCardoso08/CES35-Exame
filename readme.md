@@ -37,9 +37,10 @@ Os arquivos e recursos adicionais para este projeto podem ser encontrados no seg
 
 ## Feedbacks e Melhorias
 
-- **Melhoria na Visualização:** A visualização fornecida pelo Matplotlib precisa ser aprimorada para melhor compreensão dos movimentos dos drones.
-- **Associação de Mensagens aos Followers:** As mensagens devem indicar claramente qual follower está associado a cada uma delas.
-- **Distribuição dos Drones no Espaço:** Evitar enviar todos os drones para o mesmo ponto exato no espaço, promovendo uma distribuição mais realista.
+- ✅ **Melhoria na Visualização:** A visualização fornecida pelo Matplotlib foi aprimorada para melhor compreensão dos movimentos dos drones.
+- **Associação de Mensagens aos Followers:** As mensagens devem indicar claramente qual follower está associado a cada uma delas. (Pendente)
+- **Distribuição dos Drones no Espaço:** Evitar enviar todos os drones para o mesmo ponto exato no espaço, promovendo uma distribuição mais realista. (Pendente)
+
 
 ## Simulação Desejada
 
