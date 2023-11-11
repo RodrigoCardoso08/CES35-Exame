@@ -86,11 +86,10 @@ class MasterDrone:
             f.write(text+"\n")
 
     def enter_panic_mode(self):
-        # Função para entrar no modo de pânico e começar a voltar para a base
         self.panic_mode = True
-        for addr in list(self.followers.keys()):
-            self.print_output(f"SENT PANIC MESSAGE TO {addr}")
-            self.server.sendto("REQ:PANIC".encode('utf-8'), (addr, self.port))
+        # for addr in list(self.followers.keys()):
+        #     self.print_output(f"SENT PANIC MESSAGE TO {addr}")
+        #     self.server.sendto("REQ:PANIC".encode('utf-8'), (addr, self.port))
         self.print_output("ENTERING PANIC MODE!!")
         # self.move([10, 10, 0])
         # Movimenta apenas o drone master para a posição [10, 10, 0]
@@ -102,8 +101,11 @@ class MasterDrone:
         with open(f'drone{self.id}_position.txt', 'w') as f:
             f.write(new_position)
 
-    def move_master(self, destination):
+    def move_master(self, first_destination):
+        destination =  first_destination
         while True:
+            if self.panic_mode:
+                destination = [10, 10, 0]
             direction_vector = [dest - curr for dest, curr in zip(destination, self.position)]
             # Verifique se o drone já chegou ao destino
             if all(coord == 0 for coord in direction_vector):
@@ -250,6 +252,9 @@ class MasterDrone:
         moving_thread = threading.Thread(target=self.move_master, args=(position,))
         moving_thread.start()
         while True:
+            if self.panic_mode:  # Verifica se o panic mode foi ativado
+                self.print_output("Panic mode activated during movement")
+                break
             self.request_positions()
             time.sleep(1)
             if self.all_at_destination(position):
@@ -322,22 +327,22 @@ class MasterDrone:
         self.enter_panic_mode()
         
     def run(self):
-        self.print_output("RUN")
         listen_thread = threading.Thread(target=self.listen_for_followers)
-        self.print_output("listen_thread")
         listen_thread.start()
-        self.print_output("listen_thread start")
         self.check_presence() # First RowCall
-        self.print_output("check_presence")
         if self.panic_mode:
             return
-        self.move([100,100,0]) # Move to P2
+        # self.move([100,100,0]) # Move to P2
+        move_thread = threading.Thread(target=self.move, args=([100, 100, 0],))
+        move_thread.start()
+        # Aguarde um pouco e entre em panic mode para fins de simulação
+        time.sleep(10)
         self.enter_panic_mode()
         if self.panic_mode:
             return
         self.order_to_take_pictures() # Take Images
-        # if self.panic_mode:
-        #     return
+        if self.panic_mode:
+            return
         vote_result = self.order_to_vote()  # Voting
         self.print_output(f"Vote result {vote_result}")
         if not vote_result:            

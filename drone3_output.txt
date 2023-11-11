@@ -1,0 +1,10 @@
+LISTENING
+Recebi a mensagem REQ:CHECK
+Recebi a mensagem REQ:MOVE:100,100,0
+100,100,0
+Recebi a mensagem REQ:POS
+Recebi a mensagem REQ:POS
+Recebi a mensagem REQ:POS
+Recebi a mensagem REQ:POS
+Recebi a mensagem REQ:POS
+Comunicação com o mestre perdida. Retornando ao ponto inicial.

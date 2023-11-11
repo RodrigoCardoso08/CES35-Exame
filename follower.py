@@ -15,6 +15,7 @@ class FollowerDrone:
         self.step = 5
         self.last_communication_time = None
         self.communication_timeout = 10
+        self.master_in_panic = False
     
     def update_last_communication_time(self):
         self.last_communication_time = time.time()
@@ -55,7 +56,8 @@ class FollowerDrone:
                 position_string = f"{new_position[0]},{new_position[1]},{new_position[2]}"
                 self.update_position(position_string)
                 time.sleep(1)
-
+                if self.master_in_panic and destination == [100, 100, 0]:
+                    break
         except Exception as e:
             self.print_output(f"Erro na thread move: {e}")
 
@@ -89,13 +91,10 @@ class FollowerDrone:
                         self.client.sendto("VOTE:FALSE".encode('utf-8'), (self.master_ip, self.port))
                 elif message.startswith("REQ:PANIC"):
                     self.client.sendto("RETURNING".encode('utf-8'), (self.master_ip, self.port))
-                    self.print_output("Vou abrir returning_thread")
+                    self.master_in_panic = True
                     returning_thread = threading.Thread(target=self.move, args=([10.0,10.0,0.0],))
-                    self.print_output("Abri returning_thread")
                     returning_thread.daemon = False
-                    self.print_output("Vou setar daemon false na returning_thread")
                     returning_thread.start()
-                    self.print_output("Vou startar a returning_thread")
             except Exception as e:
                 self.print_output(f"Tomei {e}")
                 
@@ -105,7 +104,11 @@ class FollowerDrone:
             time.sleep(5)  # Verificar a cada 5 segundos
             if self.last_communication_time and (time.time() - self.last_communication_time > self.communication_timeout):
                 self.print_output("Comunicação com o mestre perdida. Retornando ao ponto inicial.")
-                self.move([10.0,10.0,0.0])
+                # self.move([10.0,10.0,0.0])
+                self.master_in_panic = True
+                returning_thread = threading.Thread(target=self.move, args=([10.0,10.0,0.0],))
+                returning_thread.daemon = False
+                returning_thread.start()
                 break
 
     def run(self):
