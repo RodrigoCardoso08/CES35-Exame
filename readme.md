@@ -17,9 +17,13 @@ Este projeto simula o comportamento de um esquadrão de drones em um ambiente de
      ```
 
 2. **Executar a Simulação:**
-   - Execute o script da simulação com o seguinte comando:
+   - Execute o script da simulação com um dos seguintes comandos:
      ```bash
-     sudo python3 simulation.py
+     sudo python3 simulation.py False 0
+
+     sudo python3 simulation.py True 0
+
+     sudo python3 simulation.py True 1
      ```
    - A senha para o `sudo` é: `wifi`
 
@@ -38,11 +42,11 @@ Os arquivos e recursos adicionais para este projeto podem ser encontrados no seg
 ## Feedbacks e Melhorias
 
 - ✅ **Melhoria na Visualização:** A visualização fornecida pelo Matplotlib foi aprimorada para melhor compreensão dos movimentos dos drones.
-- **Associação de Mensagens aos Followers:** As mensagens devem indicar claramente qual follower está associado a cada uma delas. (Pendente)
-- **Distribuição dos Drones no Espaço:** Evitar enviar todos os drones para o mesmo ponto exato no espaço, promovendo uma distribuição mais realista. (Pendente)
+- ✅ **Associação de Mensagens aos Followers:** As mensagens devem indicar claramente qual follower está associado a cada uma delas.
+- ✅ **Distribuição dos Drones no Espaço:** Evitar enviar todos os drones para o mesmo ponto exato no espaço, promovendo uma distribuição mais realista.
 
 
-## Simulação Desejada
+## Simulação Desejada no Caso Especial
 
 A simulação idealizada envolve os seguintes passos:
 1. Todos os drones começam a se mover em direção ao ponto P2.

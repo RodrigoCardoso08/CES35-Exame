@@ -2,9 +2,21 @@ import socket
 import threading
 import random
 import time
+import sys
+
+followers_delta = {
+    '10.0.0.2': [-5,-10,0],
+    '10.0.0.3': [5,-10,0],
+    '10.0.0.4': [10,-5,0],
+    '10.0.0.5': [10,5,0],
+    '10.0.0.6': [5,10,0],
+    '10.0.0.7': [-5,10,0],
+    '10.0.0.8': [-10,5,0],
+    '10.0.0.9': [-10,-5,0],
+}
 
 class MasterDrone:
-    def __init__(self, timeout=10):
+    def __init__(self, timeout=10, panic=False, panic_type=0):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.port = 9999
         self.id = 1
@@ -80,6 +92,9 @@ class MasterDrone:
         }
         self.panic_mode = False
         self.timeout = timeout
+        self.panic = panic
+        self.panic_type = panic_type
+        
     
     def print_output(self, text):
         with open(f'drone{self.id}_output.txt', 'a') as f:
@@ -87,12 +102,11 @@ class MasterDrone:
 
     def enter_panic_mode(self):
         self.panic_mode = True
-        for addr in list(self.followers.keys()):
-            self.print_output(f"SENT PANIC MESSAGE TO {addr}")
-            self.server.sendto("REQ:PANIC".encode('utf-8'), (addr, self.port))
+        if self.panic_type == 0:
+            for addr in list(self.followers.keys()):
+                self.print_output(f"SENT PANIC MESSAGE TO {addr}")
+                self.server.sendto("REQ:PANIC".encode('utf-8'), (addr, self.port))
         self.print_output("ENTERING PANIC MODE!!")
-        # self.move([10, 10, 0])
-        # Movimenta apenas o drone master para a posição [10, 10, 0]
         master_returning_thread = threading.Thread(target=self.move_master, args=([10, 10, 0],))
         master_returning_thread.start()
          
@@ -127,25 +141,13 @@ class MasterDrone:
             self.update_position(position_string)
             time.sleep(1)
 
-    def random_position(self):
-        while(True):
-            time.sleep(3)
-            position = f"{random.randint(0, 100)},{random.randint(0, 100)},0"  # Atualizando posição aleatoriamente
-            self.update_position(position)
-
     def listen_for_followers(self):
         while True:
             data, addr = self.server.recvfrom(4096)
             self.handle_message(data.decode('utf-8'), addr[0])
-        # start_time = time.time()
-        # while not self.panic_mode:  # Enquanto não estiver no modo de pânico
-        #     if time.time() - start_time > self.timeout:  # Se passar do timeout
-        #         break  # Interrompe o loop
-        #     data, addr = self.server.recvfrom(4096)
-        #     self.handle_message(data.decode('utf-8'), addr[0])
 
     def handle_message(self, message, addr):
-        self.print_output(message)
+        self.print_output(f'{message} from {addr}')
         if message.startswith("POS:"):
             _, pos = message.split(":")
             self.followers[addr] = [float(i) for i in pos.split(",")]
@@ -215,9 +217,11 @@ class MasterDrone:
     def all_at_destination(self, destination):
         all_reach = True
         for addr, position in self.followers.items():
+            follower_delta = followers_delta[addr]
             direction_vector = [dest - curr for dest, curr in zip(destination, position)]
             # Verifique se o drone já chegou ao destino
-            if not all(coord == 0 for coord in direction_vector) and self.active_followers[addr]:
+            follower_direction = [direction + delta for direction, delta in zip(direction_vector, follower_delta)]
+            if not all(coord == 0 for coord in follower_direction) and self.active_followers[addr]:
                 all_reach = False
 
         direction_vector = [dest - curr for dest, curr in zip(destination, self.position)]
@@ -237,7 +241,7 @@ class MasterDrone:
             '10.0.0.9': False
         }
         while True:
-            time.sleep(3)
+            time.sleep(0.5)
             all_moved = True
             self.expected_msgs['MOVING'] = 8
             for addr, active in self.active_followers.items():
@@ -333,11 +337,17 @@ class MasterDrone:
         if self.panic_mode:
             return
         # self.move([100,100,0]) # Move to P2
-        move_thread = threading.Thread(target=self.move, args=([100, 100, 0],))
-        move_thread.start()
-        # Aguarde um pouco e entre em panic mode para fins de simulação
-        time.sleep(10)
-        self.enter_panic_mode()
+        if self.panic:
+            move_thread = threading.Thread(target=self.move, args=([100, 100, 0],))
+            move_thread.start()
+        else:
+            self.move([100,100,0])
+
+        if self.panic:
+            # Aguarde um pouco e entre em panic mode para fins de simulação
+            time.sleep(10)
+            self.enter_panic_mode()
+
         if self.panic_mode:
             return
         self.order_to_take_pictures() # Take Images
@@ -369,7 +379,8 @@ class MasterDrone:
             time.sleep(0.1)  # Pausa breve para evitar uso excessivo da CPU
 
 if __name__ == '__main__':
-    master = MasterDrone()
+    print(sys.argv)
+    master = MasterDrone(panic=(sys.argv[1] == "True"),panic_type=int(sys.argv[2]))
     try:
         master.run()
     except Exception as e:

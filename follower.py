@@ -4,13 +4,26 @@ import threading
 import sys
 import time
 
+followers_delta = {
+    0: [0, 0, 0],
+    1: [-5,-10,0],
+    2: [5,-10,0],
+    3: [10,-5,0],
+    4: [10,5,0],
+    5: [5,10,0],
+    6: [-5,10,0],
+    7: [-10,5,0],
+    8: [-10,-5,0],
+}
+
 class FollowerDrone:
     def __init__(self,id):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.master_ip = '10.0.0.1'
         self.id = int(id)
         self.port = 9999
-        self.position = [10+2*(self.id-1), 10, 0]
+        self.delta = followers_delta[self.id -1]
+        self.position = [10 + self.delta[0], 10 + self.delta[1], 0 + self.delta[2]]
         self.client.bind((f'10.0.0.{id}', 9999))
         self.step = 5
         self.last_communication_time = None
@@ -56,7 +69,7 @@ class FollowerDrone:
                 position_string = f"{new_position[0]},{new_position[1]},{new_position[2]}"
                 self.update_position(position_string)
                 time.sleep(1)
-                if self.master_in_panic and destination == [100, 100, 0]:
+                if self.master_in_panic and destination != [10 + self.delta[0], 10 + self.delta[1], 0 + self.delta[2]]:
                     break
         except Exception as e:
             self.print_output(f"Erro na thread move: {e}")
@@ -78,7 +91,8 @@ class FollowerDrone:
                     position = message.split(':')[-1]
                     self.print_output(position)
                     x, y, z = map(float, position.split(','))
-                    moving_thread = threading.Thread(target=self.move, args=([x,y,z],))
+                    time.sleep(0.5)
+                    moving_thread = threading.Thread(target=self.move, args=([x + self.delta[0],y + self.delta[1],z + self.delta[2]],))
                     moving_thread.daemon = False
                     moving_thread.start()
                 elif message == "REQ:PIC":
@@ -92,7 +106,7 @@ class FollowerDrone:
                 elif message.startswith("REQ:PANIC"):
                     self.client.sendto("RETURNING".encode('utf-8'), (self.master_ip, self.port))
                     self.master_in_panic = True
-                    returning_thread = threading.Thread(target=self.move, args=([10.0,10.0,0.0],))
+                    returning_thread = threading.Thread(target=self.move, args=([10 + self.delta[0],10 + self.delta[1],0 + self.delta[2]],))
                     returning_thread.daemon = False
                     returning_thread.start()
             except Exception as e:
@@ -106,7 +120,7 @@ class FollowerDrone:
                 self.print_output("Comunicação com o mestre perdida. Retornando ao ponto inicial.")
                 # self.move([10.0,10.0,0.0])
                 self.master_in_panic = True
-                returning_thread = threading.Thread(target=self.move, args=([10.0,10.0,0.0],))
+                returning_thread = threading.Thread(target=self.move, args=([10 + self.delta[0],10 + self.delta[1],0 + self.delta[2]],))
                 returning_thread.daemon = False
                 returning_thread.start()
                 break
